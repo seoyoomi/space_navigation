@@ -1,26 +1,27 @@
 import React, { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 // ✅ 1. OrbitControls를 import 합니다.
 import { OrbitControls } from '@react-three/drei';
 
 /**
- * 3D 큐브 컴포넌트 (이전과 동일)
+ * RC카 컴포넌트
  */
-function Cube() {
-  const meshRef = useRef();
-
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta * 0.5;
-      meshRef.current.rotation.y += delta * 0.5;
-    }
-  });
-
+function RCCarModel() { // ✅ 이름 변경
+  const meshRef = useRef(); 
+  
+  // useFrame은 현재 비활성화 (위치 고정 확인용)
+  // 나중에 실시간 위치 업데이트 시 다시 사용할 예정
+  
   return (
-    <mesh ref={meshRef}>
-      {/* 1x1x1 큐브는 10x10x10cm */}
-      <boxGeometry args={[1, 1, 1]} />
-      <boxGeometry args={[1, 1, 1]} /> 
+    <mesh 
+      ref={meshRef} 
+      // RC카 시작 위치 (오른쪽 맨 아래)
+      // 구의 중심이 Y=0.5에 있어야 바닥에 딱 붙습니다.
+      position={[5.5, 0.5, 8.5]} 
+    >
+      {/* ✅ <boxGeometry> 대신 <sphereGeometry> 사용 */}
+      {/* args={[반지름]} -> 지름이 1 unit(10cm)인 구 */}
+      <sphereGeometry args={[0.5]} /> 
       <meshStandardMaterial color={0x007bff} />
     </mesh>
   );
@@ -46,8 +47,8 @@ export default function App() {
         <meshStandardMaterial color={0xbbbbbb} />
       </mesh>
 
-      {/* 큐브 컴포넌트 */}
-      <Cube />
+      {/* RC카 컴포넌트 */}
+      <RCCarModel />
 
       {/* 카메라 컨트롤 */}
       <OrbitControls />
