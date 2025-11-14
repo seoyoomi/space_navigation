@@ -1,39 +1,55 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
+
+// 목적지 좌표
+//    (시작: z=8.5, 목적지: z=-5.0)
+const targetDestination = new Vector3(5.5, 0.5, -7.0);
+
+// 멈췄다고 판단할 근접 거리 (0.1 unit = 1cm)
+const stopDistance = 0.1;
 
 /**
  * RC카 컴포넌트
  */
 function RCCarModel() { // ✅ 이름 변경
   const meshRef = useRef(); 
+  // RC카가 현재 움직이는 중인지 상태로 관리
+  const [isMoving, setIsMoving] = useState(true);
   
   // useFrame은 현재 비활성화 (위치 고정 확인용)
   // 나중에 실시간 위치 업데이트 시 다시 사용할 예정
-
   useFrame((state, delta) => {
     if (meshRef.current) {
-      // --- (임시) RC카 자동 이동 ---
-      // 1초에 1.5 unit(15cm)씩 Z축 방향으로 전진
-      // 나중에 WebSocket 데이터로 이 부분을 대체하세요.
-      meshRef.current.position.z -= delta * 1.5;
+      const carPosition = meshRef.current.position;
+      // isMoving 상태가 true일 때만 위치 계산 및 이동
+      if (isMoving) {
+
+        // --- (임시) RC카 자동 이동 코드 ---
+        // 목적지까지의 2D/3D 거리 계산
+        const distanceToTarget = carPosition.distanceTo(targetDestination);
+
+        if (distanceToTarget > stopDistance) {
+          // 아직 목적지 전이면 계속 이동
+          meshRef.current.position.z -= delta * 1.5; // Z축으로 전진
+        } else {
+          //목적지에 도달하면 isMoving 상태를 false로 변경
+          console.log("목적지에 도착했습니다!");
+          setIsMoving(false); 
+          
+          //위치를 목적지에 정확히 고정시킴
+          meshRef.current.position.copy(targetDestination);
+        }
+      }
 
       // --- 카메라 추적 로직 ---
-      // 1. RC카의 현재 위치 가져오기
-      const carPosition = meshRef.current.position;
-
-      // 2. 카메라가 따라갈 목표 위치 계산
-      // (RC카의 X값, RC카보다 5 unit 위, RC카보다 8 unit 뒤)
+      // (카메라는 RC카가 멈춘 후에도 계속 추적해야 함)
       const targetPosition = new Vector3(
         carPosition.x,
-        carPosition.y + 5, // RC카보다 5 unit(50cm) 위
-        carPosition.z + 8  // RC카보다 8 unit(80cm) 뒤
+        carPosition.y + 5, 
+        carPosition.z + 8  
       );
-
-      // 3. 카메라 위치를 목표 위치로 부드럽게 이동 (lerp)
       state.camera.position.lerp(targetPosition, 0.1);
-
-      // 4. 카메라가 항상 RC카를 바라보도록 설정
       state.camera.lookAt(carPosition);
     }
   });
