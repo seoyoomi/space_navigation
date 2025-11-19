@@ -12,7 +12,7 @@ const stopDistance = 0.1;
 /**
  * RC카 컴포넌트
  */
-function RCCarModel() { // ✅ 이름 변경
+function RCCarModel() { 
   const meshRef = useRef(); 
   // RC카가 현재 움직이는 중인지 상태로 관리
   const [isMoving, setIsMoving] = useState(true);
@@ -58,10 +58,8 @@ function RCCarModel() { // ✅ 이름 변경
     <mesh 
       ref={meshRef} 
       // RC카 시작 위치 (오른쪽 맨 아래)
-      // 구의 중심이 Y=0.5에 있어야 바닥에 딱 붙습니다.
       position={[5.5, 0.5, 8.5]} 
     >
-      {/* ✅ <boxGeometry> 대신 <sphereGeometry> 사용 */}
       {/* args={[반지름]} -> 지름이 1 unit(10cm)인 구 */}
       <sphereGeometry args={[0.5]} /> 
       <meshStandardMaterial color={0x007bff} />
@@ -70,10 +68,9 @@ function RCCarModel() { // ✅ 이름 변경
 }
 
 /**
- * 간단한 건물 컴포넌트 (이전과 동일)
+ * 간단한 건물 컴포넌트
  */
-function Building({ position, size, color = 'gray' }) {
-  // ... (이전과 동일) ...
+function Building({ position, size, color = "#d2d3d1" }) {
   return (
     <mesh position={[position[0], position[1] + size[1] / 2, position[2]]}>
       <boxGeometry args={size} />
@@ -86,29 +83,39 @@ function Building({ position, size, color = 'gray' }) {
  * 메인 앱 컴포넌트
  */
 export default function App() {
+  // 사용될 색상 정의
+  const ROAD_COLOR = '#E0E0E0'; // 밝은 도로색
+  const GRASS_COLOR = '#E1F0C4'; // 연한 연두색 잔디
+  const ROAD_THICKNESS = 0.05; // 도로 블록의 높이 
+  const GRASS_THICKNESS = 0.1; // 잔디 블록의 높이
+
   return (
-    <Canvas camera={{ position: [0, 2, 5], fov: 75 }}>
+    <Canvas camera={{ position: [0, 20, 0], fov: 45}}>
       {/* 조명 설정 */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[1, 2, 3]} intensity={1} />
 
-      {/* '아크릴 판'에 해당하는 바닥 평면 */}
-      <mesh 
-        position-y={-0.5} 
-        rotation-x={-Math.PI / 2}
-      >
-        {/* ✅ 가로 12, 세로 18 (120cm x 180cm) 크기로 변경 */}
-        <planeGeometry args={[12, 18]} /> 
-        <meshStandardMaterial color={0xbbbbbb} />
+      {/* ⬜ 바닥 (회색 아크릴 판) */}
+      <mesh position-y={0} rotation-x={-Math.PI / 2}>
+        <planeGeometry args={[12, 18]} />
+        <meshStandardMaterial color="#bbbbbb" />
       </mesh>
 
-      {/* RC카 컴포넌트 */}
+      {/* 🚗 RC카 */}
       <RCCarModel />
 
-      {/* 건물들 */}
-      <Building position={[-4, 0, 5]} size={[9, 9, 2]} color="red" />
-      <Building position={[3, 0, -4]} size={[4, 2, 3]} color="green" />
-      <Building position={[2, 0, 2]} size={[1, 5, 1]} color="blue" />
+      {/* 🌳 지형지물 (잔디밭 구현) */}
+      
+      {/* 위쪽 구역 잔디 */}
+      <Building position={[-1, 0, -8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+
+      {/* 중앙 구역 잔디 */}
+      <Building position={[0, 0, -4]} size={[8, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+      <Building position={[-3, 0, 2]} size={[2, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
+      <Building position={[2, 0, 2]} size={[4, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
+      
+      {/* 아래쪽 구역 잔디 (RC카 경로 옆) */}
+      <Building position={[0, 0, 8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
 
     </Canvas>
   );
