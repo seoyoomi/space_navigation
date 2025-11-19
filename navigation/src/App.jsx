@@ -70,6 +70,19 @@ function RCCarModel() { // ✅ 이름 변경
 }
 
 /**
+ * 간단한 건물 컴포넌트 (이전과 동일)
+ */
+function Building({ position, size, color = 'gray' }) {
+  // ... (이전과 동일) ...
+  return (
+    <mesh position={[position[0], position[1] + size[1] / 2, position[2]]}>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  );
+}
+
+/**
  * 메인 앱 컴포넌트
  */
 export default function App() {
@@ -91,6 +104,11 @@ export default function App() {
 
       {/* RC카 컴포넌트 */}
       <RCCarModel />
+
+      {/* 건물들 */}
+      <Building position={[-4, 0, 5]} size={[9, 9, 2]} color="red" />
+      <Building position={[3, 0, -4]} size={[4, 2, 3]} color="green" />
+      <Building position={[2, 0, 2]} size={[1, 5, 1]} color="blue" />
 
     </Canvas>
   );
