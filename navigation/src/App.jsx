@@ -68,9 +68,9 @@ function RCCarModel() {
 }
 
 /**
- * 간단한 건물 컴포넌트
+ * 물체 컴포넌트
  */
-function Building({ position, size, color = "#d2d3d1" }) {
+function Object({ position, size, color = "#d2d3d1" }) {
   return (
     <mesh position={[position[0], position[1] + size[1] / 2, position[2]]}>
       <boxGeometry args={size} />
@@ -107,15 +107,15 @@ export default function App() {
       {/* 🌳 지형지물 (잔디밭 구현) */}
       
       {/* 위쪽 구역 잔디 */}
-      <Building position={[-1, 0, -8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+      <Object position={[-1, 0, -8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
 
       {/* 중앙 구역 잔디 */}
-      <Building position={[0, 0, -4]} size={[8, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
-      <Building position={[-3, 0, 2]} size={[2, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
-      <Building position={[2, 0, 2]} size={[4, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
+      <Object position={[0, 0, -4]} size={[8, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+      <Object position={[-3, 0, 2]} size={[2, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
+      <Object position={[2, 0, 2]} size={[4, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
       
       {/* 아래쪽 구역 잔디 (RC카 경로 옆) */}
-      <Building position={[0, 0, 8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+      <Object position={[0, 0, 8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
 
     </Canvas>
   );
