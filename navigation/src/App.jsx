@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
+import { OrbitControls } from '@react-three/drei';
 
 // 목적지 좌표
 //    (시작: z=8.5, 목적지: z=-5.0)
@@ -41,16 +42,6 @@ function RCCarModel() {
           meshRef.current.position.copy(targetDestination);
         }
       }
-
-      // --- 카메라 추적 로직 ---
-      // (카메라는 RC카가 멈춘 후에도 계속 추적해야 함)
-      const targetPosition = new Vector3(
-        carPosition.x,
-        carPosition.y + 5, 
-        carPosition.z + 8  
-      );
-      state.camera.position.lerp(targetPosition, 0.1);
-      state.camera.lookAt(carPosition);
     }
   });
   
@@ -84,16 +75,19 @@ function Object({ position, size, color = "#d2d3d1" }) {
  */
 export default function App() {
   // 사용될 색상 정의
-  const ROAD_COLOR = '#E0E0E0'; // 밝은 도로색
+  const BUILDING_COLOR = '#E0E0E0'; // 건물 색
   const GRASS_COLOR = '#E1F0C4'; // 연한 연두색 잔디
   const ROAD_THICKNESS = 0.05; // 도로 블록의 높이 
   const GRASS_THICKNESS = 0.1; // 잔디 블록의 높이
 
   return (
-    <Canvas camera={{ position: [0, 20, 0], fov: 45}}>
+    <Canvas camera={{ position: [0, 30, 0], fov: 45}}>
       {/* 조명 설정 */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[1, 2, 3]} intensity={1} />
+      
+      {/* 마우스로 지도를 둘러볼 수 있게 해줌 */}
+      <OrbitControls />
 
       {/* ⬜ 바닥 (회색 아크릴 판) */}
       <mesh position-y={0} rotation-x={-Math.PI / 2}>
@@ -115,7 +109,26 @@ export default function App() {
       <Object position={[2, 0, 2]} size={[4, GRASS_THICKNESS, 6]} color={GRASS_COLOR} />
       
       {/* 아래쪽 구역 잔디 (RC카 경로 옆) */}
-      <Object position={[0, 0, 8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+      <Object position={[-1, 0, 8]} size={[10, GRASS_THICKNESS, 2]} color={GRASS_COLOR} />
+
+
+
+      {/* 건물 구현 */}
+      <Object position={[3, 0, -4]} size={[1, 1.3, 0.7]} color = {BUILDING_COLOR} />
+      <Object position={[-0.5, 0, -4]} size={[0.7, 1, 0.5]} color = {BUILDING_COLOR} />
+      <Object position={[-3, 0, -4]} size={[0.7, 1, 0.5]} color = {BUILDING_COLOR} />
+
+      <Object position={[-3, 0, 0]} size={[0.5, 1, 0.7]} color = {BUILDING_COLOR} />
+      <Object position={[-3, 0, 2]} size={[1, 1.7, 1]} color = {BUILDING_COLOR} />
+      <Object position={[-3, 0, 3.8]} size={[1, 1.7, 1]} color = {BUILDING_COLOR} />
+
+      <Object position={[-5, 0, 8]} size={[0.8, 2, 1.4]} color = {BUILDING_COLOR} />
+      <Object position={[-4, 0, 8.4]} size={[1.2, 2, 0.6]} color = {BUILDING_COLOR} />
+
+      <Object position={[-2, 0, 8.4]} size={[1.2, 2, 0.6]} color = {BUILDING_COLOR} />
+      <Object position={[-1, 0, 8]} size={[0.8, 2, 1.4]} color = {BUILDING_COLOR} />
+
+      <Object position={[2, 0, 8]} size={[1.5, 1.3, 1]} color = {BUILDING_COLOR} />
 
     </Canvas>
   );
