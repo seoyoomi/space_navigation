@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo} from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Line } from '@react-three/drei';
 import * as THREE from 'three';
 
 //맵 데이터 (0:벽, 1:길, 2:장애물, 3:시작, 4:도착)
@@ -144,7 +144,7 @@ function reconstructPath(cameFrom, current) {
 function RCCarModel({ path }) { 
   const meshRef = useRef();
   const [targetIndex, setTargetIndex] = useState(1); 
-  const SPEED = 3.0; 
+  const SPEED = 2.0; 
 
   useFrame((state, delta) => {
     if (!meshRef.current || !path || path.length === 0) return;
@@ -174,20 +174,35 @@ function RCCarModel({ path }) {
     }
   });
   
-  // 경로 데이터가 아직 계산되지 않았거나 비어있다면? -> 아무것도 그리지 않음
+  // 경로 데이터가 없으면 아무것도 안 그림
   if (!path || path.length === 0) {
     return null; 
   }
 
+  // ✅ [여기가 핵심!] "남은 경로"만 계산하기
+  // targetIndex는 "지금 가고 있는 목표"입니다.
+  // 따라서 (targetIndex - 1)은 "방금 출발한 곳"입니다.
+  // 거기서부터 끝까지만 잘라내면(slice), 내 뒤쪽 길은 배열에서 삭제되어 안 그려집니다.
+  const remainingPath = path.slice(Math.max(0, targetIndex - 1));
+
   return (
-    <mesh 
-      ref={meshRef} 
-      // 계산된 경로의 '첫 번째 좌표'에서 시작합니다. (맵 배열의 '3' 위치가 자동으로 여기 들어옵니다)
-      position={path[0]} 
-    >
-      <sphereGeometry args={[0.5]} /> 
-      <meshStandardMaterial color={0x007bff} />
-    </mesh>
+    <>
+      <mesh 
+        ref={meshRef} 
+        // 계산된 경로의 '첫 번째 좌표'에서 시작합니다. (맵 배열의 '3' 위치가 자동으로 여기 들어옵니다)
+        position={path[0]} 
+      >
+        <sphereGeometry args={[0.5]} /> 
+        <meshStandardMaterial color={0x007bff} />
+      </mesh>
+
+      <Line
+        points={remainingPath}    // 전체 path가 아니라 '남은 길'만 넣음
+        color="red"               // 선 색상
+        lineWidth={4}             // 선 두께
+        position={[0, -0.45, 0]}  // 바닥에 딱 붙게 높이 조절
+      />
+    </>
   );
 }
 
