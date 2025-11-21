@@ -179,7 +179,7 @@ function RCCarModel({ path }) {
     return null; 
   }
 
-  // ✅ [여기가 핵심!] "남은 경로"만 계산하기
+  // 남은 경로만 계산하기
   // targetIndex는 "지금 가고 있는 목표"입니다.
   // 따라서 (targetIndex - 1)은 "방금 출발한 곳"입니다.
   // 거기서부터 끝까지만 잘라내면(slice), 내 뒤쪽 길은 배열에서 삭제되어 안 그려집니다.
@@ -204,6 +204,38 @@ function RCCarModel({ path }) {
       />
     </>
   );
+}
+
+/**
+ * 호수 컴포넌트
+ */
+function Lake({ position }) {
+  // 물 재질 공통 설정
+  const waterMaterial = (
+    <meshStandardMaterial 
+      color="#a4c7e5"   // 하늘색
+      roughness={0.1}   // 매끈하게
+      metalness={0.1}   // 약간 반짝임
+      transparent       // 투명 켜기
+      opacity={0.8}     // 약간 투명하게 (바닥이 살짝 비침)
+    />
+  );
+
+  return (
+  <group position={position}>
+    {/* 1. 메인 덩어리 */}
+    <mesh 
+      position={[0, 0.1, 0]}
+      
+      /* [가로비율, 높이비율, 세로비율] */
+      scale={[1, 1, 1.7]} 
+    >
+      {/* 원래 도형 (반지름 1.5인 원) */}
+      <cylinderGeometry args={[1.5, 1.5, 0.15, 12]} />
+      {waterMaterial}
+    </mesh>
+  </group>
+);
 }
 
 /**
@@ -298,6 +330,10 @@ export default function App() {
       <Object position={[-1, 0, 8]} size={[0.8, 2, 1.4]} color = {BUILDING_COLOR} />
 
       <Object position={[2, 0, 8]} size={[1.5, 1.3, 1]} color = {BUILDING_COLOR} />
+
+
+      {/* 호수 구현 */}
+      <Lake position={[2, 0, 2]} />
 
     </Canvas>
   );
