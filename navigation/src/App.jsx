@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo} from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
-import { OrbitControls, Line } from '@react-three/drei';
+import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 
 //맵 데이터 (0:벽, 1:길, 2:장애물, 3:시작, 4:도착)
@@ -169,8 +169,18 @@ function RCCarModel({ path }) {
       // 이동 실행
       meshRef.current.position.add(direction.multiplyScalar(SPEED * delta));
       
-      // 자동차가 진행 방향을 바라보게 하려면?
-      meshRef.current.lookAt(targetVec); 
+      // 카메라가 자동차를 따라가게 만들기
+      const carPosition = meshRef.current.position;
+
+      // 1. 카메라의 목표 위치 설정 (자동차보다 위로 5, 뒤로 5만큼 떨어진 곳)
+      const cameraOffset = new THREE.Vector3(0, 5, 5); 
+      const targetCameraPos = carPosition.clone().add(cameraOffset);
+
+      // 2. 부드럽게 이동 (Lerp 사용)
+      state.camera.position.lerp(targetCameraPos, 0.1);
+
+      // 3. 카메라는 항상 자동차를 바라봄
+      state.camera.lookAt(carPosition);
     }
   });
   
@@ -197,7 +207,7 @@ function RCCarModel({ path }) {
       </mesh>
 
       <Line
-        points={remainingPath}    // 전체 path가 아니라 '남은 길'만 넣음
+        points={remainingPath}    // 남은 길
         color="red"               // 선 색상
         lineWidth={4}             // 선 두께
         position={[0, -0.45, 0]}  // 바닥에 딱 붙게 높이 조절
@@ -286,9 +296,7 @@ export default function App() {
       {/* 조명 설정 */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[1, 2, 3]} intensity={1} />
-      
-      {/* 마우스로 지도를 둘러볼 수 있게 해줌 */}
-      <OrbitControls />
+    
 
       {/* ⬜ 바닥 (회색 아크릴 판) */}
       <mesh position-y={0} rotation-x={-Math.PI / 2}>
