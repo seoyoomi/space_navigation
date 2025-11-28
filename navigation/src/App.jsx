@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo} from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Vector3 } from 'three';
-import { Line } from '@react-three/drei';
+import { OrbitControls, Line } from '@react-three/drei';
 import * as THREE from 'three';
 
 //맵 데이터 (0:벽, 1:길, 2:장애물, 3:시작, 4:도착)
@@ -187,23 +187,8 @@ function RCCarModel({ path }) {
       // 이전 위치 업데이트
       previousPositionRef.current.copy(meshRef.current.position);
 
-      // 카메라 추적
-      const carPosition = meshRef.current.position;
-
-      // 1. 카메라 목표 위치
-      const cameraOffset = new THREE.Vector3(0, 5, 5);
-      const targetCameraPos = carPosition.clone().add(cameraOffset);
-
-      // 부드럽게 위치 보간
-      state.camera.position.lerp(targetCameraPos, 0.05);
-
-      // 2. 카메라 목표 회전 (lookAt을 slerp로 대체)
-      const camera = state.camera;
-      const lookAtMatrix = new THREE.Matrix4();
-      lookAtMatrix.lookAt(camera.position, carPosition, new THREE.Vector3(0,1,0));
-
-      const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
-      camera.quaternion.slerp(targetQuat, 0.05);
+      // 하늘에서 맵 보기
+      meshRef.current.lookAt(targetVec); 
     }
   });
   
@@ -315,7 +300,9 @@ export default function App() {
       {/* 조명 설정 */}
       <ambientLight intensity={0.5} />
       <directionalLight position={[1, 2, 3]} intensity={1} />
-    
+
+      {/* 마우스로 지도를 둘러볼 수 있게 해줌 */}
+      <OrbitControls />   
 
       {/* ⬜ 바닥 (회색 아크릴 판) */}
       <mesh position-y={0} rotation-x={-Math.PI / 2}>
