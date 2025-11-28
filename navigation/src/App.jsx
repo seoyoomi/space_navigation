@@ -134,7 +134,7 @@ function reconstructPath(cameFrom, current) {
     const prevPos = fromKey(prevKey);
     totalPath.push(prevPos);
     currKey = prevKey;
-  }
+  } 
   return totalPath.reverse(); // 시작 -> 끝 순서로 뒤집기
 }
 
@@ -143,74 +143,93 @@ function reconstructPath(cameFrom, current) {
  */
 function RCCarModel({ path }) { 
   const meshRef = useRef();
-  const [targetIndex, setTargetIndex] = useState(1); 
+  const targetIndexRef = useRef(1); 
+  const [currentLineIndex, setCurrentLineIndex] = useState(1);
   const SPEED = 2.0; 
+
+  // 이전 프레임의 위치를 저장하여 회전 방향 계산에 사용
+  const previousPositionRef = useRef(new THREE.Vector3().copy(path[0] ? new THREE.Vector3(path[0][0], path[0][1], path[0][2]) : new THREE.Vector3()));
 
   useFrame((state, delta) => {
     if (!meshRef.current || !path || path.length === 0) return;
-    if (targetIndex >= path.length) return; // 도착하면 멈춤
+    if (targetIndexRef.current >= path.length) return; 
 
     const currentPos = meshRef.current.position;
-    
-    // path 데이터가 [x, y, z] 배열이라고 가정
-    const targetCoord = path[targetIndex]; 
+    const targetCoord = path[targetIndexRef.current]; 
     const targetVec = new THREE.Vector3(targetCoord[0], targetCoord[1], targetCoord[2]);
 
     const distance = currentPos.distanceTo(targetVec);
 
     if (distance < 0.1) {
-      setTargetIndex((prev) => prev + 1); // 다음 목표로
+      targetIndexRef.current += 1; 
+      setCurrentLineIndex(targetIndexRef.current);
     } else {
-      // 이동 방향 계산
+      // **1. 이동 방향 계산**
       const direction = new THREE.Vector3()
         .subVectors(targetVec, currentPos)
         .normalize();
       
-      // 이동 실행
+      // **2. RC카 위치 업데이트**
       meshRef.current.position.add(direction.multiplyScalar(SPEED * delta));
       
-      // 카메라가 자동차를 따라가게 만들기
+      // **3. RC카 회전 업데이트 (진행 방향을 바라보도록)**
+      // 이동 벡터를 계산한 후, 쿼터니언을 사용하여 부드럽게 회전시킵니다.
+      const currentMoveDirection = new THREE.Vector3().subVectors(meshRef.current.position, previousPositionRef.current);
+      if (currentMoveDirection.lengthSq() > 0.0001) { // 아주 작은 움직임은 무시하여 불안정성 방지
+          const targetQuaternion = new THREE.Quaternion();
+          // lookAt 쿼터니언을 생성합니다. (y축이 위를 향하도록 보정)
+          targetQuaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), currentMoveDirection.normalize());
+          
+          // 현재 쿼터니언에서 목표 쿼터니언으로 부드럽게 보간 (lerp)
+          meshRef.current.quaternion.slerp(targetQuaternion, 0.1); // 0.1은 보간 속도
+      }
+      
+      // 이전 위치 업데이트
+      previousPositionRef.current.copy(meshRef.current.position);
+
+      // 카메라 추적
       const carPosition = meshRef.current.position;
 
-      // 1. 카메라의 목표 위치 설정 (자동차보다 위로 5, 뒤로 5만큼 떨어진 곳)
-      const cameraOffset = new THREE.Vector3(0, 5, 5); 
+      // 1. 카메라 목표 위치
+      const cameraOffset = new THREE.Vector3(0, 5, 5);
       const targetCameraPos = carPosition.clone().add(cameraOffset);
 
-      // 2. 부드럽게 이동 (Lerp 사용)
-      state.camera.position.lerp(targetCameraPos, 0.1);
+      // 부드럽게 위치 보간
+      state.camera.position.lerp(targetCameraPos, 0.05);
 
-      // 3. 카메라는 항상 자동차를 바라봄
-      state.camera.lookAt(carPosition);
+      // 2. 카메라 목표 회전 (lookAt을 slerp로 대체)
+      const camera = state.camera;
+      const lookAtMatrix = new THREE.Matrix4();
+      lookAtMatrix.lookAt(camera.position, carPosition, new THREE.Vector3(0,1,0));
+
+      const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMatrix);
+      camera.quaternion.slerp(targetQuat, 0.05);
     }
   });
   
-  // 경로 데이터가 없으면 아무것도 안 그림
   if (!path || path.length === 0) {
     return null; 
   }
 
-  // 남은 경로만 계산하기
-  // targetIndex는 "지금 가고 있는 목표"입니다.
-  // 따라서 (targetIndex - 1)은 "방금 출발한 곳"입니다.
-  // 거기서부터 끝까지만 잘라내면(slice), 내 뒤쪽 길은 배열에서 삭제되어 안 그려집니다.
-  const remainingPath = path.slice(Math.max(0, targetIndex - 1));
+  const remainingPath = path.slice(Math.max(0, currentLineIndex - 1));
 
   return (
     <>
       <mesh 
         ref={meshRef} 
-        // 계산된 경로의 '첫 번째 좌표'에서 시작합니다. (맵 배열의 '3' 위치가 자동으로 여기 들어옵니다)
         position={path[0]} 
+        // 4. 초기 회전 설정 (Z축을 바라보도록) - 필요에 따라 조절
+        rotation-y={Math.PI} // ex) 시작 방향이 Z축 반대 방향이라면
       >
-        <sphereGeometry args={[0.5]} /> 
+        <boxGeometry args={[1, 0.5, 1.5]} /> {/* [가로, 높이, 깊이] 직사각형 크기 */}
         <meshStandardMaterial color={0x007bff} />
       </mesh>
 
       <Line
-        points={remainingPath}    // 남은 길
-        color="red"               // 선 색상
-        lineWidth={4}             // 선 두께
-        position={[0, -0.45, 0]}  // 바닥에 딱 붙게 높이 조절
+        points={remainingPath} 
+        color="red"
+        lineWidth={4}
+        position={[0, -0.45, 0]}
       />
     </>
   );
